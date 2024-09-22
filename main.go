@@ -16,7 +16,6 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -target amd64 process_and_thread_exec process_and_thread_exec.c
 
-
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
