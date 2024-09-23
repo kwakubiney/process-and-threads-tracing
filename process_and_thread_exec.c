@@ -30,14 +30,12 @@ struct sched_process_fork_t {
 };
 
 
-//we can't us execve because not every process creation
-//uses execve, fork() and clone() can be called without exec()
+//we can't use execve because not every process creation uses execve(), fork() and clone() can be called without execve()
 SEC("tracepoint/sched/sched_process_fork")
 int detect_new_process(struct sched_process_fork_t *ctx) {
     bpf_printk("pid of parent process is %ld with command %s\n", ctx->parent_pid, ctx->parent_comm);
     bpf_printk("pid of new child process is %ld with command %s\n", ctx->child_pid, ctx->child_comm);
     return 0;
 }
-
 
 char __license[] SEC("license") = "GPL";

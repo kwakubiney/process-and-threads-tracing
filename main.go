@@ -27,38 +27,38 @@ func main() {
 
 	var objs process_and_thread_execObjects
 	if err := loadProcess_and_thread_execObjects(&objs, nil); err != nil {
-		log.Print("Error loading eBPF objects:", err)
-	}
+		log.Print("error loading eBPF objects:", err)
 
-	defer objs.Close()
+		defer objs.Close()
 
-	link, err := link.Tracepoint("sched", "sched_process_fork", objs.DetectNewProcess, nil)
-	if err != nil {
-		log.Fatalf("opening tracepoint for process: %s", err)
-	}
-
-	//loop over /sys/kernel/debug/tracing/trace_pipe
-	//seems the kernel sends tp events to this file so we can just read the file as we move along.
-	const traceEventFileName = "/sys/kernel/debug/tracing/trace_pipe"
-	traceEventFile, err := os.Open(traceEventFileName)
-	if err != nil {
-		log.Fatalf("error occurred whilst opening file %s: %s\n", traceEventFileName, err)
-	}
-
-	var fileScanner = bufio.NewScanner(traceEventFile)
-
-	go func() {
-		for fileScanner.Scan() {
-			fmt.Println(fileScanner.Text())
+		link, err := link.Tracepoint("sched", "sched_process_fork", objs.DetectNewProcess, nil)
+		if err != nil {
+			log.Fatalf("error occurred whilst opening tracepoint for process: %s", err)
 		}
-		if err := fileScanner.Err(); err != nil {
-			if !errors.Is(err, fs.ErrClosed) {
-				log.Println(err)
+
+		//loop over /sys/kernel/debug/tracing/trace_pipe
+		//seems the kernel sends tp events to this file so we can just read the file as we move along.
+		const traceEventFileName = "/sys/kernel/debug/tracing/trace_pipe"
+		traceEventFile, err := os.Open(traceEventFileName)
+		if err != nil {
+			log.Fatalf("error occurred whilst opening file %s: %s\n", traceEventFileName, err)
+		}
+
+		var fileScanner = bufio.NewScanner(traceEventFile)
+
+		go func() {
+			for fileScanner.Scan() {
+				fmt.Println(fileScanner.Text())
 			}
-		}
-	}()
+			if err := fileScanner.Err(); err != nil {
+				if !errors.Is(err, fs.ErrClosed) {
+					log.Println(err)
+				}
+			}
+		}()
 
-	defer link.Close()
+		defer link.Close()
 
-	<-ctx.Done()
+		<-ctx.Done()
+	}
 }
